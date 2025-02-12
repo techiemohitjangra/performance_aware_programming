@@ -37,9 +37,10 @@ const Instruction = packed struct {
     op_code: OpCodes,
 
     pub fn print(self: Instruction) void {
-        std.debug.print("{b:0<8}_{b:0<8} => {b:0<6} {b:<1} {b:<1} {b:0<2} {b:0<3} {b:0<3}\n", .{
-            @as(u16, @bitCast(self)) & @as(u16, 0xFF),
+        std.debug.print("{b} => {b:0>8}_{b:0>8} => {b:0>6} {b:>1} {b:>1} {b:0>2} {b:0>3} {b:0>3}\n", .{
+            @as(u16, @bitCast(self)),
             @as(u16, @bitCast(self)) >> 8 & @as(u16, 0xFF),
+            @as(u16, @bitCast(self)) & @as(u16, 0xFF),
             @intFromEnum(self.op_code),
             self.d,
             self.w,
@@ -68,17 +69,7 @@ fn parse_instruction(allocator: Allocator, data: []u8) ![]Instruction {
     const instructions = try allocator.alloc(Instruction, @intFromFloat(count));
     for (instructions, 0..) |*instr, idx| {
         const raw_value = @as(u16, data[idx * 2]) << 8 | @as(u16, data[idx * 2 + 1]);
-
         instr.* = @bitCast(raw_value);
-
-        // instr.* = Instruction{
-        //     .op_code = @enumFromInt(@as(u6, @intCast((raw_value >> 10) & 0b111111))),
-        //     .d = @intCast((raw_value >> 9) & 0b1),
-        //     .w = @intCast((raw_value >> 8) & 0b1),
-        //     .mod = @enumFromInt((raw_value >> 6) & 0b11),
-        //     .reg = @intCast((raw_value >> 3) & 0b111),
-        //     .r_m = @intCast(raw_value & 0b111),
-        // };
     }
     return instructions;
 }
@@ -88,11 +79,11 @@ fn disassemble(instructions: []Instruction) void {
         var source: Registers = undefined;
         var destination: Registers = undefined;
         if (instr.d == 0) {
-            destination = @enumFromInt(@as(u4, instr.r_m << 1) + instr.w);
-            source = @enumFromInt(@as(u4, instr.reg << 1) + instr.w);
+            destination = @enumFromInt((@as(u4, instr.r_m) << 1) + instr.w);
+            source = @enumFromInt((@as(u4, instr.reg) << 1) + instr.w);
         } else {
-            destination = @enumFromInt(@as(u4, instr.reg << 1) + instr.w);
-            source = @enumFromInt(@as(u4, instr.r_m << 1) + instr.w);
+            destination = @enumFromInt((@as(u4, instr.reg) << 1) + instr.w);
+            source = @enumFromInt((@as(u4, instr.r_m) << 1) + instr.w);
         }
         std.debug.print("{s} {s}, {s}\n", .{
             to_string(OpCodes, instr.op_code),
@@ -116,10 +107,10 @@ pub fn main() !void {
         const instructions: []Instruction = try parse_instruction(allocator, data);
         defer allocator.free(instructions);
 
-        for (instructions) |instruction| {
-            instruction.print();
-        }
-        // disassemble(instructions);
+        // for (instructions) |instruction| {
+        //     instruction.print();
+        // }
+        disassemble(instructions);
     } else {
         std.debug.print("Usage: {s} <input_file>", .{args[0]});
     }
