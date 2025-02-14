@@ -90,7 +90,7 @@ char *instruction_name(instruction_type instr) {
     }
 }
 
-void print(instruction instr) {
+void disassemble(instruction instr) {
     registers destination;
     registers source;
     if (instr.d == 0) {
@@ -100,10 +100,8 @@ void print(instruction instr) {
         destination = (instr.reg << 1) + instr.w;
         source = (instr.r_m << 1) + instr.w;
     }
-    printf("%016b => %06b %1b %1b %02b %03b %03b\n", instr.value, instr.op_code,
-           instr.d, instr.w, instr.mod, instr.reg, instr.r_m);
-    // printf("%s %s, %s\n", instruction_name((instruction_type)instr.op_code),
-    //        register_name(destination), register_name(source));
+    printf("%s %s, %s\n", instruction_name((instruction_type)instr.op_code),
+           register_name(destination), register_name(source));
 }
 
 int main(int argc, char **argv) {
@@ -132,7 +130,7 @@ int main(int argc, char **argv) {
         int idx = 0;
         instruction *instructions = (instruction *)data;
         while (idx < instruction_count) {
-            print(instructions[idx]);
+            disassemble(instructions[idx]);
             idx += 1;
         }
         close(fd);
